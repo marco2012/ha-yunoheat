@@ -113,6 +113,10 @@ CI runs Ruff, [hassfest](https://developers.home-assistant.io/docs/creating_comp
 and HACS validation on every push. See [`docs/contributing.md`](docs/contributing.md) for the
 full development and release workflow.
 
+## License
+
+Released under the [MIT License](LICENSE).
+
 ## Credits
 
 - All API access goes through the [`pyyunoheat`](https://pypi.org/project/pyyunoheat/) library.
