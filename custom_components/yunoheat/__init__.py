@@ -7,9 +7,9 @@ import logging
 from yunoheat import (
     APIConnectionError,
     AuthError,
+    ConfigEntryAuthFailed as YunoHeatAuthFailed,
     YunoHeatClient,
 )
-from yunoheat import ConfigEntryAuthFailed as YunoHeatAuthFailed
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform

@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 from datetime import timedelta
+import logging
 
 from yunoheat import (
     APIConnectionError,
     APIError,
     AuthError,
+    ConfigEntryAuthFailed as YunoHeatAuthFailed,
     EntityContext,
     EntityDiscoveryError,
     UsageEvent,
     YunoHeatClient,
 )
-from yunoheat import ConfigEntryAuthFailed as YunoHeatAuthFailed
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant

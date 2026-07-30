@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Mapping
+import logging
 from typing import Any
 
 import voluptuous as vol
 from yunoheat import (
     APIConnectionError,
     AuthError,
+    ConfigEntryAuthFailed as YunoHeatAuthFailed,
     InMemoryTokenStore,
     PersonCustomer,
     TokenData,
     YunoHeatClient,
     YunoHeatError,
 )
-from yunoheat import ConfigEntryAuthFailed as YunoHeatAuthFailed
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD

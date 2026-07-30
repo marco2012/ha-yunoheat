@@ -28,11 +28,14 @@ The integration runs inside Home Assistant; there is no standalone app to launch
 day you just need Ruff for linting:
 
 ```bash
-pip install ruff
+pip install ruff==0.16.0
 ruff check .
 ```
 
 `ruff check .` is the **only** local check — there are no tests in this repository.
+
+The rule set and import ordering live in [`ruff.toml`](https://github.com/Irishsmurf/ha-yunoheat/blob/main/ruff.toml);
+CI pins the same Ruff version as above, so a new release can't turn the build red on its own.
 
 ### Working against the API library
 

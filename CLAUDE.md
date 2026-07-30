@@ -8,7 +8,9 @@ A HACS custom integration for Home Assistant exposing a Yuno Energy Heat (Irish 
 
 ## Commands
 
-- Lint: `ruff check .` (the only local check; there are no tests in this repo)
+- Lint: `ruff check .` (the only local check; there are no tests in this repo). Rules and
+  import ordering are configured in `ruff.toml`; CI pins the Ruff version in `lint.yaml`, so
+  bump both together
 - CI on every push: Ruff, hassfest, and HACS validation (`.github/workflows/`)
 
 ### Cutting a release
