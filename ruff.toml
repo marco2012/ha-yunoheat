@@ -1,0 +1,26 @@
+# Ruff configuration. Pinning the rule set here keeps CI reproducible: without it
+# `ruff check .` follows whatever the latest release happens to enable by default.
+target-version = "py313"
+
+[lint]
+select = [
+    "E4",  # pycodestyle: imports
+    "E7",  # pycodestyle: statements
+    "E9",  # pycodestyle: runtime errors
+    "F",   # pyflakes
+    "I",   # isort
+    "SIM", # flake8-simplify
+]
+
+[lint.isort]
+# Match Home Assistant core: `homeassistant` sorts as first-party, after the
+# third-party block (pyyunoheat, voluptuous) and before local imports.
+#
+# detect-same-package must stay off: this integration's package is itself named
+# `yunoheat`, so the same-package heuristic would misfile the pyyunoheat library
+# (imported as `yunoheat`) as first-party.
+detect-same-package = false
+force-sort-within-sections = true
+known-first-party = ["homeassistant"]
+combine-as-imports = true
+split-on-trailing-comma = false

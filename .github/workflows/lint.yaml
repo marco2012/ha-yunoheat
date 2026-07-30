@@ -11,6 +11,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install Ruff
-        run: pip install ruff
+        # Pinned deliberately: an unpinned `pip install ruff` picks up whatever
+        # released last, so a new default rule set turns CI red without a commit.
+        run: pip install ruff==0.16.0
       - name: Run Ruff
         run: ruff check .

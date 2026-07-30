@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+import contextlib
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -166,15 +167,13 @@ class YunoHeatCumulativeSensor(YunoHeatEntity, RestoreSensor):
     async def async_added_to_hass(self) -> None:
         """Handle entity which will be added."""
         await super().async_added_to_hass()
-        if (state := await self.async_get_last_sensor_data()) is not None:
-            try:
-                self._state = float(state.native_value)
-            except (TypeError, ValueError):
-                pass
+        if (sensor_data := await self.async_get_last_sensor_data()) is not None:
+            with contextlib.suppress(TypeError, ValueError):
+                self._state = float(sensor_data.native_value)
 
-        if (state := await self.async_get_last_state()) is not None:
-            if "last_event_id" in state.attributes:
-                self._last_event_id = state.attributes["last_event_id"]
+        state = await self.async_get_last_state()
+        if state is not None and "last_event_id" in state.attributes:
+            self._last_event_id = state.attributes["last_event_id"]
 
         self._update_state()
 
