@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 import logging
 from typing import TYPE_CHECKING
 
@@ -127,8 +127,10 @@ class YunoHeatHistoryImporter:
         date_from = window_start(
             days or DEFAULT_BACKFILL_DAYS, now=now, last_start=last_start
         )
-        events = await self._async_fetch_events(date_from, now)
-        rows = daily_rows(events)
+        # Fetch one extra day so the first row has a previous register reading to
+        # take its change from, then keep only the rows inside the window.
+        events = await self._async_fetch_events(date_from - timedelta(days=1), now)
+        rows = [r for r in daily_rows(events) if r.read_at >= date_from]
         if not rows:
             _LOGGER.debug("No daily readings between %s and %s", date_from, now)
             return ImportResult(0, None, None, 0.0, 0.0)

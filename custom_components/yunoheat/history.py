@@ -26,8 +26,9 @@ class DailyRow:
     """Consumption for one day, taken from the daily meter reading events."""
 
     read_at: datetime  # when the meter was read (UTC)
-    usage_kwh: float  # kWh consumed in the period ending at read_at
-    cost_eur: float  # cost of that consumption
+    usage_kwh: float  # kWh the meter register advanced in the period ending at read_at
+    billed_kwh: float  # kWh Yuno billed for that period (register change + 1)
+    cost_eur: float  # cost of that consumption, as billed
     meter_kwh: float | None  # cumulative meter register at read_at
 
     @property
@@ -53,6 +54,12 @@ def daily_rows(events: Iterable[UsageEvent]) -> list[DailyRow]:
 
     Duplicate events (same ``event_id``) are ignored. Several daily events for
     the same reading time are summed.
+
+    Yuno bills ``quantity`` = the change in the meter register plus 1 kWh per
+    reading, so ``quantity`` overstates the heat actually used. ``usage_kwh`` is
+    therefore the register change since the previous reading. It falls back to
+    the billed quantity for the first reading, when the register is missing, or
+    when it went backwards (a replaced meter). Cost is always the billed amount.
     """
     seen: set[int] = set()
     usage: dict[datetime, float] = {}
@@ -75,15 +82,27 @@ def daily_rows(events: Iterable[UsageEvent]) -> list[DailyRow]:
         else:
             meter.setdefault(read_at, None)
 
-    return [
-        DailyRow(
-            read_at=read_at,
-            usage_kwh=usage[read_at],
-            cost_eur=cost[read_at],
-            meter_kwh=meter[read_at],
+    rows: list[DailyRow] = []
+    previous_meter: float | None = None
+    for read_at in sorted(usage):
+        reading = meter[read_at]
+        used = usage[read_at]  # billed quantity, the fallback
+        if reading is not None and previous_meter is not None:
+            delta = reading - previous_meter
+            if delta >= 0:
+                used = delta
+        rows.append(
+            DailyRow(
+                read_at=read_at,
+                usage_kwh=used,
+                billed_kwh=usage[read_at],
+                cost_eur=cost[read_at],
+                meter_kwh=reading,
+            )
         )
-        for read_at in sorted(usage)
-    ]
+        if reading is not None:
+            previous_meter = reading
+    return rows
 
 
 @dataclass(frozen=True, slots=True)

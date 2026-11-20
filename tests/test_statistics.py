@@ -89,10 +89,10 @@ async def test_full_import_writes_running_totals(
     result = await importer.async_import(days=60)
 
     assert result.days == 3
-    assert result.usage_kwh == 16.0  # the +70/-70 billing events are ignored
+    assert result.usage_kwh == 14.0  # register change; +70/-70 billing events ignored
     stats = await _stats(hass)
     usage = stats[USAGE_ID]
-    assert [round(r["sum"], 3) for r in usage] == [5.0, 9.0, 16.0]
+    assert [round(r["sum"], 3) for r in usage] == [5.0, 8.0, 14.0]
     assert [r["state"] for r in usage] == [834.0, 837.0, 843.0]
     # attributed to the previous day at 12:00 UTC
     assert dt_util.utc_from_timestamp(usage[0]["start"]) == datetime(
@@ -109,7 +109,7 @@ async def test_reimport_is_idempotent(
     await _stats(hass)
     await importer.async_import(days=60)
     usage = (await _stats(hass))[USAGE_ID]
-    assert [round(r["sum"], 3) for r in usage] == [5.0, 9.0, 16.0]
+    assert [round(r["sum"], 3) for r in usage] == [5.0, 8.0, 14.0]
 
 
 async def test_incremental_continues_the_same_series(
@@ -134,7 +134,7 @@ async def test_incremental_continues_the_same_series(
     result = await importer.async_import()  # no days: incremental
     assert result.days >= 1
     usage = (await _stats(hass))[USAGE_ID]
-    assert [round(r["sum"], 3) for r in usage] == [5.0, 9.0, 16.0, 19.0]
+    assert [round(r["sum"], 3) for r in usage] == [5.0, 8.0, 14.0, 17.0]
     assert usage[-1]["state"] == 846.0
 
 
@@ -146,7 +146,7 @@ async def test_incremental_with_nothing_new_changes_nothing(
     await _stats(hass)
     await importer.async_import()
     usage = (await _stats(hass))[USAGE_ID]
-    assert [round(r["sum"], 3) for r in usage] == [5.0, 9.0, 16.0]
+    assert [round(r["sum"], 3) for r in usage] == [5.0, 8.0, 14.0]
 
 
 async def test_pagination_collects_every_page(

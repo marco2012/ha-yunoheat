@@ -59,6 +59,8 @@ Compared with the original integration:
 - **History backfill.** Daily usage and cost are written as external statistics, imported
   automatically on first setup (up to two years) and kept current afterwards. A
   `yunoheat.backfill_history` action re-imports on demand.
+- **Usage follows the meter.** The usage statistic is the change in the meter register, not the
+  billed quantity, which is that change plus 1 kWh a day.
 - **Billing roll-ups are ignored.** At bill time the platform posts roll-up and reversal events
   (for example +70 kWh and -70 kWh) that restate a whole billing period. They are excluded so
   consumption is not double-counted.
@@ -159,6 +161,10 @@ You can find them under **Developer tools → Statistics**.
 
 **How the data is read**
 
+- **Usage is the meter's actual change.** Yuno bills each day as the change in the meter
+  register **plus 1 kWh**, so the billed quantity (which the *Latest usage* sensor shows) runs
+  about 1 kWh a day above the heat actually used. The usage statistic uses the register change
+  instead, so it matches your meter. The cost statistic is the amount **as billed**.
 - A day's reading is stamped at midnight UTC and holds the previous day's consumption, so it is
   shown on the previous day.
 - The meter reports one reading a day. It usually reaches Yuno's platform a few hours after

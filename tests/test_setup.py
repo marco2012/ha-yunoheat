@@ -101,7 +101,7 @@ async def test_history_is_imported_automatically_on_setup(
 ) -> None:
     entry = await _setup(hass)
     assert entry.state is ConfigEntryState.LOADED
-    assert await _usage(hass) == [5.0, 9.0, 16.0]
+    assert await _usage(hass) == [5.0, 8.0, 14.0]
 
 
 async def test_backfill_service_returns_a_summary(
@@ -113,9 +113,9 @@ async def test_backfill_service_returns_a_summary(
     )
     summary = response["user@example.com"]
     assert summary["days_imported"] == 3
-    assert summary["usage_kwh"] == 16.0
+    assert summary["usage_kwh"] == 14.0
     assert summary["first"].startswith("2026-11-15T12:00")
-    assert await _usage(hass) == [5.0, 9.0, 16.0]
+    assert await _usage(hass) == [5.0, 8.0, 14.0]
 
 
 async def test_service_rejects_out_of_range_days(
