@@ -22,6 +22,11 @@ cumulative total ready for the [Energy dashboard](https://www.home-assistant.io/
 > This is an unofficial, community-built integration. It is **not** affiliated with,
 > endorsed by, or supported by Yuno Energy.
 
+> [!IMPORTANT]
+> This is a fork of [Irishsmurf/ha-yunoheat](https://github.com/Irishsmurf/ha-yunoheat) that adds
+> [heat history backfill](#heat-history-backfill) and a 24-hour poll interval. See
+> [What's different in this fork](#whats-different-in-this-fork).
+
 ---
 
 ## Features
@@ -43,16 +48,41 @@ following sensors:
 Because each metric carries the correct device class and state class, the energy sensors
 plug straight into the Energy dashboard and long-term statistics.
 
+In addition, the integration imports your **daily heat history** as two long-term statistics
+(usage in kWh and cost in €), so the Energy dashboard shows readings from before you installed
+it. See [Heat history (backfill)](#heat-history-backfill).
+
+## What's different in this fork
+
+Compared with the original integration:
+
+- **History backfill.** Daily usage and cost are written as external statistics, imported
+  automatically on first setup (up to two years) and kept current afterwards. A
+  `yunoheat.backfill_history` action re-imports on demand.
+- **Billing roll-ups are ignored.** At bill time the platform posts roll-up and reversal events
+  (for example +70 kWh and -70 kWh) that restate a whole billing period. They are excluded so
+  consumption is not double-counted.
+- **Polls every 24 hours** instead of every 6. The meter reports one reading per day, so more
+  frequent polling only repeats requests that return nothing new.
+- **Tests.** A pytest suite runs against a real Home Assistant recorder with a stubbed client.
+- **Requires the `recorder` integration** (declared as a dependency; it is on by default).
+
+The sensors and their entity IDs are unchanged.
+
 ## Installation
 
 ### HACS (recommended)
 
 1. In Home Assistant, open **HACS → Integrations → ⋮ (top right) → Custom repositories**.
-2. Add `https://github.com/Irishsmurf/ha-yunoheat` with the category **Integration**.
+2. Add `https://github.com/marco2012/ha-yunoheat` with the category **Integration**.
 3. Search for **Yuno Energy Heat** and click **Download**.
 4. Restart Home Assistant.
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Irishsmurf&repository=ha-yunoheat&category=integration)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=marco2012&repository=ha-yunoheat&category=integration)
+
+If you previously installed the original `Irishsmurf/ha-yunoheat`, remove that entry from HACS
+first so only one copy is listed. Removing it from HACS does not delete your configured
+integration, but you may need to add the integration again after the swap.
 
 ### Manual
 
@@ -76,7 +106,24 @@ ever changes, Home Assistant prompts you to re-authenticate.
 
 ## Adding to the Energy dashboard
 
-Use the **Cumulative usage** sensor to track Yuno heat consumption over time:
+There are two ways to add Yuno heat to the Energy dashboard. Pick **one** for a given source,
+so consumption is not counted twice.
+
+### Option 1: history statistics (recommended)
+
+This shows your past readings as well as new ones.
+
+1. Open **Settings → Dashboards → Energy → Edit**.
+2. Under **Gas consumption**, click **Add gas source** and choose **Yuno Heat usage**
+   (`yunoheat:meter_<meter id>_usage`).
+3. Under cost, choose **Use an entity tracking the total costs** and pick **Yuno Heat cost**
+   (`yunoheat:meter_<meter id>_cost`).
+
+Use the statistic names above, not the sensors, for this option.
+
+### Option 2: the Cumulative usage sensor
+
+This only counts from the day you installed the integration:
 
 1. Open **Settings → Dashboards → Energy**.
 2. Under **Gas/Heating consumption** (or **Individual devices**), add
@@ -87,28 +134,38 @@ The cumulative sensor accumulates each new usage event client-side and restores 
 across restarts, so it keeps a monotonic increasing value even though the API only returns a
 rolling window of recent events.
 
-### Heat history (backfill)
+## Heat history (backfill)
 
-The sensors above only know about readings from the day you installed the integration. To get
-your past readings into the Energy dashboard, the integration also writes your daily heat usage
-and cost as long-term statistics. These are separate *external statistics*, so they never touch
-the sensors' own history:
+The sensors only know about readings from the day you installed the integration. To get your
+past readings into the Energy dashboard, the integration also writes your daily heat usage and
+cost as long-term statistics. These are separate *external statistics*, so they never touch the
+sensors' own history:
 
-- `yunoheat:meter_<meter id>_usage` (kWh, "Yuno Heat usage")
-- `yunoheat:meter_<meter id>_cost` (EUR, "Yuno Heat cost")
+| Statistic | Unit | Name |
+| --- | --- | --- |
+| `yunoheat:meter_<meter id>_usage` | kWh | Yuno Heat usage |
+| `yunoheat:meter_<meter id>_cost` | EUR | Yuno Heat cost |
 
-The first import runs automatically after setup and looks back up to two years. After that it
-adds new readings after every poll. To re-import (for example after a correction), call the
-`yunoheat.backfill_history` action, optionally with `days` (1 to 1825, default 730). It returns a
-summary of what was imported.
+You can find them under **Developer tools → Statistics**.
 
-To use it in the Energy dashboard, add **Yuno Heat usage** as the gas/heating source and choose
-**Use an entity tracking the total costs** with **Yuno Heat cost**. Use these *instead of* the
-sensors above for that source, so consumption is not counted twice.
+**When it runs**
 
-A day's reading is stamped at midnight UTC and holds the previous day's consumption, so it is
-shown on the previous day. Bill-time roll-up and reversal events from the platform are ignored,
-because they restate a whole billing period and would double-count.
+- **First setup:** an import runs automatically and looks back up to two years.
+- **After that:** it adds new readings after every poll (every 24 hours). It re-reads the last
+  few days each time, so late or corrected readings are picked up.
+- **On demand:** call the `yunoheat.backfill_history` action (**Developer tools → Actions**),
+  optionally with `days` (1 to 1825, default 730). It re-imports that many days from scratch
+  and returns a summary: days imported, first and last day, total kWh and cost.
+
+**How the data is read**
+
+- A day's reading is stamped at midnight UTC and holds the previous day's consumption, so it is
+  shown on the previous day.
+- The meter reports one reading a day. It usually reaches Yuno's platform a few hours after
+  midnight, so yesterday's usage normally appears in the morning.
+- Bill-time roll-up and reversal events are ignored, because they restate a whole billing
+  period and would double-count.
+- How far back you get depends on how much history Yuno's server keeps.
 
 ## Documentation
 
@@ -129,10 +186,12 @@ Then open <http://127.0.0.1:8000>.
 Issues and pull requests are welcome. The short version:
 
 ```bash
-ruff check .   # the only local check; there are no tests
+ruff check .   # lint
+pytest         # needs pytest-homeassistant-custom-component and pyyunoheat installed
 ```
 
-CI runs Ruff, [hassfest](https://developers.home-assistant.io/docs/creating_component_index/),
+The tests run against a real Home Assistant recorder with a stubbed Yuno client, using
+anonymised usage events in `tests/fixtures/`. CI runs Ruff, [hassfest](https://developers.home-assistant.io/docs/creating_component_index/),
 and HACS validation on every push. See [`docs/contributing.md`](docs/contributing.md) for the
 full development and release workflow.
 
