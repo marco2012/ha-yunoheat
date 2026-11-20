@@ -16,7 +16,7 @@ flowchart TD
     E["sensor platform<br/>(sensor.py)"]
 
     A -->|"build YunoHeatClient — resume from saved<br/>tokens, else fresh email/password login"| B
-    B -->|"_async_setup: resolve EntityContext (meter id)<br/>_async_update_data: poll every 6h for balance<br/>+ last 60 days of usage events"| C
+    B -->|"_async_setup: resolve EntityContext (meter id)<br/>_async_update_data: poll every 24h for balance<br/>+ last 60 days of usage events"| C
     C --> D
     D -->|"read on each update"| E
 ```

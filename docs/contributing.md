@@ -9,7 +9,7 @@ that run, how the documentation is built, and how releases are cut.
 custom_components/yunoheat/   the integration
   __init__.py                 entry setup / teardown
   config_flow.py              UI setup + reauth
-  coordinator.py              6-hour polling, YunoHeatData
+  coordinator.py              24-hour polling, YunoHeatData
   entity.py                   shared base entity / device
   sensor.py                   sensor platform
   token_store.py              token persistence in the config entry

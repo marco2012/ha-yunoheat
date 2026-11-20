@@ -28,7 +28,7 @@ cumulative total ready for the [Energy dashboard](https://www.home-assistant.io/
 
 Yuno Energy Heat is an Irish communal-heating provider. Your account exposes a balance, a
 running stream of metered usage "events", and a meter register. This integration polls that
-account every 6 hours and surfaces it as a single Home Assistant **device** with the
+account every 24 hours and surfaces it as a single Home Assistant **device** with the
 following sensors:
 
 | Sensor | Entity ID | Device class | Description |

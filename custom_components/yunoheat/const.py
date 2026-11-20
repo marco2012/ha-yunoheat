@@ -9,7 +9,7 @@ DOMAIN: Final = "yunoheat"
 
 MANUFACTURER: Final = "Yuno Energy"
 
-DEFAULT_SCAN_INTERVAL: Final = timedelta(hours=6)
+DEFAULT_SCAN_INTERVAL: Final = timedelta(hours=24)
 
 # Key inside ConfigEntry.data holding the TokenData.to_dict() payload.
 CONF_TOKENS: Final = "tokens"

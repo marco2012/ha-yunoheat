@@ -27,7 +27,7 @@ Naming trap: pyyunoheat exports its own `ConfigEntryAuthFailed`, which is not Ho
 
 ## Architecture
 
-Data flow: `__init__.async_setup_entry` builds a `YunoHeatClient` (resuming from saved tokens, falling back to a fresh email/password login) → `YunoHeatDataUpdateCoordinator` polls every 6 hours, fetching the open bill balance and the last 60 days of usage events into a `YunoHeatData` dataclass → stored on `entry.runtime_data` (typed via the `YunoHeatConfigEntry` alias) → sensor platform reads it.
+Data flow: `__init__.async_setup_entry` builds a `YunoHeatClient` (resuming from saved tokens, falling back to a fresh email/password login) → `YunoHeatDataUpdateCoordinator` polls every 24 hours, fetching the open bill balance and the last 60 days of usage events into a `YunoHeatData` dataclass → stored on `entry.runtime_data` (typed via the `YunoHeatConfigEntry` alias) → sensor platform reads it.
 
 Key design points that span files:
 

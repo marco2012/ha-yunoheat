@@ -15,7 +15,7 @@ A [Home Assistant](https://www.home-assistant.io/) custom integration that bring
 ## What it does
 
 [Yuno Energy](https://yunoenergy.ie/) Heat is an Irish communal-heating provider. This
-integration logs into your account, polls it every six hours, and exposes the data as a
+integration logs into your account, polls it every 24 hours, and exposes the data as a
 single Home Assistant device with sensors for:
 
 - **Outstanding balance** — the amount currently due on your open bill.
@@ -51,6 +51,6 @@ single Home Assistant device with sensors for:
 | Domain | `yunoheat` |
 | Integration type | Service (cloud polling) |
 | Configuration | UI config flow (email + password) |
-| Poll interval | Every 6 hours |
+| Poll interval | Every 24 hours |
 | API library | [`pyyunoheat`](https://pypi.org/project/pyyunoheat/) |
 | Minimum Home Assistant | 2025.1.0 |
