@@ -158,13 +158,22 @@ You can find them under **Developer tools → Statistics**.
 - **On demand:** call the `yunoheat.backfill_history` action (**Developer tools → Actions**),
   optionally with `days` (1 to 1825, default 730). It re-imports that many days from scratch
   and returns a summary: days imported, first and last day, total kWh and cost.
+- **Keep only data from a date:** pass `start_date` (for example your move-in day). The stored
+  history is deleted and re-imported from that day, so totals restart at zero and nothing older
+  is kept. `days` is ignored when `start_date` is set. Later automatic imports never reach back
+  past the first stored day.
 
 **How the data is read**
 
-- **Usage is the meter's actual change.** Yuno bills each day as the change in the meter
-  register **plus 1 kWh**, so the billed quantity (which the *Latest usage* sensor shows) runs
-  about 1 kWh a day above the heat actually used. The usage statistic uses the register change
-  instead, so it matches your meter. The cost statistic is the amount **as billed**.
+- **Usage is the meter's actual change.** The platform's billed quantity is the change in the
+  meter register **plus 1** per day, so the quantity (which the *Latest usage* sensor shows) runs
+  about 1 kWh a day above the heat actually used. The cost data fits a daily standing charge plus
+  a per-kWh rate on the register change, so that extra unit is the standing charge, not heat.
+  The usage statistic uses the register change, so it matches your meter. The cost statistic is
+  the amount **as billed**.
+- **The meter belongs to the property, not to you.** Yuno returns the property's full history,
+  including earlier occupants. If you moved in recently, set `start_date` (see below) so only
+  your own data is kept.
 - A day's reading is stamped at midnight UTC and holds the previous day's consumption, so it is
   shown on the previous day.
 - The meter reports one reading a day. It usually reaches Yuno's platform a few hours after

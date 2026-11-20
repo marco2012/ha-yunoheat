@@ -25,3 +25,4 @@ BACKFILL_MAX_PAGES: Final = 100
 
 SERVICE_BACKFILL_HISTORY: Final = "backfill_history"
 ATTR_DAYS: Final = "days"
+ATTR_START_DATE: Final = "start_date"

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 import logging
 from typing import TYPE_CHECKING
 
@@ -33,7 +33,6 @@ from homeassistant.components.recorder.models import (
 )
 from homeassistant.components.recorder.statistics import (
     async_add_external_statistics,
-    get_last_statistics,
     statistics_during_period,
 )
 from homeassistant.const import CURRENCY_EURO
@@ -43,7 +42,13 @@ from homeassistant.util import dt as dt_util
 from homeassistant.util.unit_conversion import EnergyConverter
 
 from .const import BACKFILL_MAX_PAGES, BACKFILL_PAGE_SIZE, DEFAULT_BACKFILL_DAYS, DOMAIN
-from .history import SumPoint, daily_rows, running_sums, window_start
+from .history import (
+    ATTRIBUTION_OFFSET as _ATTRIBUTION_OFFSET,
+    SumPoint,
+    daily_rows,
+    running_sums,
+    window_start,
+)
 
 if TYPE_CHECKING:
     from .coordinator import YunoHeatDataUpdateCoordinator
@@ -107,26 +112,41 @@ class YunoHeatHistoryImporter:
         self._coordinator = coordinator
         self._lock = asyncio.Lock()
 
-    async def async_import(self, days: int | None = None) -> ImportResult:
+    async def async_import(
+        self, days: int | None = None, start_date: date | None = None
+    ) -> ImportResult:
         """Import history.
 
-        With ``days`` it re-imports that many days from scratch. Without it, it
-        continues from the last stored point (or does a full import on first use).
+        With ``start_date`` it deletes the stored history and re-imports from that
+        day, so the series starts there. With ``days`` it re-imports that many days
+        from scratch. Without either, it continues from the last stored point (or
+        does a full import on first use).
         """
         async with self._lock:
-            return await self._async_import(days)
+            return await self._async_import(days, start_date)
 
-    async def _async_import(self, days: int | None) -> ImportResult:
+    async def _async_import(
+        self, days: int | None, start_date: date | None
+    ) -> ImportResult:
         usage_id, cost_id = statistic_ids(self._coordinator.context.meter_identifier)
 
-        last_start = None
-        if days is None:
-            last_start = await self._async_last_start(usage_id)
+        first_start = last_start = None
+        if days is None and start_date is None:
+            first_start, last_start = await self._async_stored_bounds(usage_id)
 
         now = dt_util.utcnow()
-        date_from = window_start(
-            days or DEFAULT_BACKFILL_DAYS, now=now, last_start=last_start
-        )
+        if start_date is not None:
+            # A reading stamped at midnight holds the previous day's usage, so the
+            # first reading to keep is the one at the end of ``start_date``.
+            date_from = datetime.combine(start_date + timedelta(days=1), time.min, UTC)
+        else:
+            date_from = window_start(
+                days or DEFAULT_BACKFILL_DAYS, now=now, last_start=last_start
+            )
+            if first_start is not None:
+                # Never reach back past the first stored point, so a start date or
+                # a shorter earlier import is not undone by the lookback.
+                date_from = max(date_from, first_start + _ATTRIBUTION_OFFSET)
         # Fetch one extra day so the first row has a previous register reading to
         # take its change from, then keep only the rows inside the window.
         events = await self._async_fetch_events(date_from - timedelta(days=1), now)
@@ -135,9 +155,15 @@ class YunoHeatHistoryImporter:
             _LOGGER.debug("No daily readings between %s and %s", date_from, now)
             return ImportResult(0, None, None, 0.0, 0.0)
 
-        base_kwh, base_eur = await self._async_baseline(
-            usage_id, cost_id, rows[0].start
-        )
+        if start_date is not None:
+            # Start the series from scratch, so nothing older is left behind and
+            # the running totals begin at zero.
+            await self._async_clear([usage_id, cost_id])
+            base_kwh = base_eur = 0.0
+        else:
+            base_kwh, base_eur = await self._async_baseline(
+                usage_id, cost_id, rows[0].start
+            )
         kwh_points, eur_points = running_sums(
             rows, base_kwh=base_kwh, base_eur=base_eur
         )
@@ -201,14 +227,42 @@ class YunoHeatHistoryImporter:
             ) from err
         return events
 
-    async def _async_last_start(self, usage_id: str) -> datetime | None:
-        """Return the start of the newest stored usage point, if any."""
-        last = await get_instance(self._hass).async_add_executor_job(
-            get_last_statistics, self._hass, 1, usage_id, True, {"sum"}
+    async def _async_clear(self, statistic_ids_to_clear: list[str]) -> None:
+        """Delete stored statistics and wait until the recorder has done it."""
+        loop = self._hass.loop
+        done: asyncio.Future[None] = loop.create_future()
+
+        def _on_done() -> None:
+            # Called from the recorder thread.
+            loop.call_soon_threadsafe(
+                lambda: done.done() or done.set_result(None)
+            )
+
+        get_instance(self._hass).async_clear_statistics(
+            statistic_ids_to_clear, on_done=_on_done
         )
-        if not (rows := last.get(usage_id)):
-            return None
-        return dt_util.utc_from_timestamp(rows[0]["start"])
+        await asyncio.wait_for(done, timeout=60)
+
+    async def _async_stored_bounds(
+        self, usage_id: str
+    ) -> tuple[datetime | None, datetime | None]:
+        """Return the start of the first and last stored usage points, if any."""
+        found = await get_instance(self._hass).async_add_executor_job(
+            statistics_during_period,
+            self._hass,
+            _EPOCH,
+            None,
+            {usage_id},
+            "hour",
+            None,
+            {"sum"},
+        )
+        if not (rows := found.get(usage_id)):
+            return None, None
+        return (
+            dt_util.utc_from_timestamp(rows[0]["start"]),
+            dt_util.utc_from_timestamp(rows[-1]["start"]),
+        )
 
     async def _async_baseline(
         self, usage_id: str, cost_id: str, first_start: datetime

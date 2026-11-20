@@ -18,7 +18,7 @@ _BILLING_SESSION = re.compile(r"-[a-z]-\d+$")
 # A reading is stamped at midnight UTC and holds the consumption of the day
 # before. Attribute it to the middle of that day so that the Energy dashboard
 # shows it on the right local day in both winter and summer time.
-_ATTRIBUTION_OFFSET = timedelta(hours=12)
+ATTRIBUTION_OFFSET = timedelta(hours=12)
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,7 +34,7 @@ class DailyRow:
     @property
     def start(self) -> datetime:
         """Return the hour the consumption is attributed to (UTC, on the hour)."""
-        return (self.read_at - _ATTRIBUTION_OFFSET).replace(
+        return (self.read_at - ATTRIBUTION_OFFSET).replace(
             minute=0, second=0, microsecond=0
         )
 

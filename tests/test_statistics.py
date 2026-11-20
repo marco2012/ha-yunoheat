@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -174,3 +174,50 @@ async def test_pagination_collects_every_page(
     assert [c["page"] for c in client.calls] == [1, 2]
     usage = (await _stats(hass))[USAGE_ID]
     assert usage[-1]["sum"] == BACKFILL_PAGE_SIZE + 20
+
+
+async def test_start_date_replaces_history_and_restarts_the_series(
+    recorder_mock: Recorder, hass: HomeAssistant
+) -> None:
+    importer, client = _importer(hass, _raw())
+    await importer.async_import(days=60)
+    assert [round(r["sum"], 3) for r in (await _stats(hass))[USAGE_ID]] == [
+        5.0,
+        8.0,
+        14.0,
+    ]
+
+    # Keep consumption from 16 Nov on: the readings stamped 17 and 18 Nov.
+    result = await importer.async_import(start_date=date(2026, 11, 16))
+
+    assert result.days == 2
+    stats = await _stats(hass)
+    usage = stats[USAGE_ID]
+    # old rows are gone, totals restart at zero, deltas use the 16 Nov register
+    assert [round(r["sum"], 3) for r in usage] == [3.0, 9.0]
+    assert dt_util.utc_from_timestamp(usage[0]["start"]) == datetime(
+        2026, 11, 16, 12, tzinfo=UTC
+    )
+    assert stats[COST_ID][-1]["sum"] == pytest.approx(1.73637 + 2.44923)
+
+    # a later incremental import must not bring the old history back
+    await importer.async_import()
+    usage = (await _stats(hass))[USAGE_ID]
+    assert [round(r["sum"], 3) for r in usage] == [3.0, 9.0]
+
+
+async def test_start_date_with_nothing_to_import_keeps_existing_history(
+    recorder_mock: Recorder, hass: HomeAssistant
+) -> None:
+    importer, _ = _importer(hass, _raw())
+    await importer.async_import(days=60)
+    await _stats(hass)
+
+    result = await importer.async_import(start_date=date(2027, 1, 1))
+
+    assert result.days == 0
+    assert [round(r["sum"], 3) for r in (await _stats(hass))[USAGE_ID]] == [
+        5.0,
+        8.0,
+        14.0,
+    ]

@@ -126,3 +126,18 @@ async def test_service_rejects_out_of_range_days(
         await hass.services.async_call(
             DOMAIN, "backfill_history", {"days": 0}, blocking=True, return_response=True
         )
+
+
+async def test_service_start_date_restarts_the_series(
+    recorder_mock: Recorder, enable_custom_integrations: None, hass: HomeAssistant
+) -> None:
+    await _setup(hass)
+    response = await hass.services.async_call(
+        DOMAIN,
+        "backfill_history",
+        {"start_date": "2026-11-16"},
+        blocking=True,
+        return_response=True,
+    )
+    assert response["user@example.com"]["days_imported"] == 2
+    assert await _usage(hass) == [3.0, 9.0]

@@ -32,6 +32,7 @@ from homeassistant.helpers.typing import ConfigType
 
 from .const import (
     ATTR_DAYS,
+    ATTR_START_DATE,
     CONF_TOKENS,
     DEFAULT_BACKFILL_DAYS,
     DOMAIN,
@@ -52,6 +53,7 @@ BACKFILL_SERVICE_SCHEMA = vol.Schema(
         vol.Optional(ATTR_DAYS, default=DEFAULT_BACKFILL_DAYS): vol.All(
             vol.Coerce(int), vol.Range(min=1, max=MAX_BACKFILL_DAYS)
         ),
+        vol.Optional(ATTR_START_DATE): cv.date,
     }
 )
 
@@ -73,7 +75,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
         response: dict[str, object] = {}
         for entry in entries:
-            result = await entry.runtime_data.history.async_import(call.data[ATTR_DAYS])
+            start_date = call.data.get(ATTR_START_DATE)
+            result = await entry.runtime_data.history.async_import(
+                None if start_date else call.data[ATTR_DAYS], start_date
+            )
             response[entry.title] = {
                 "days_imported": result.days,
                 "first": result.first.isoformat() if result.first else None,

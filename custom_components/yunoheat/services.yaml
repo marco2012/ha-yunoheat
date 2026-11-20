@@ -9,3 +9,7 @@ backfill_history:
           max: 1825
           mode: box
           unit_of_measurement: days
+    start_date:
+      required: false
+      selector:
+        date:

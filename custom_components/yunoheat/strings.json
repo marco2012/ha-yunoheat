@@ -61,7 +61,11 @@
       "fields": {
         "days": {
           "name": "Days",
-          "description": "How many days of history to import."
+          "description": "How many days of history to import. Ignored when a start date is set."
+        },
+        "start_date": {
+          "name": "Start date",
+          "description": "First day to keep. When set, the stored history is deleted and re-imported from this day, and Days is ignored."
         }
       }
     }
