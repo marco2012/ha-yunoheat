@@ -24,6 +24,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from homeassistant.util import dt as dt_util
 
 from .const import DEFAULT_SCAN_INTERVAL, DOMAIN, USAGE_LOOKBACK_DAYS
+from .statistics import YunoHeatHistoryImporter
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ class YunoHeatDataUpdateCoordinator(DataUpdateCoordinator[YunoHeatData]):
 
     config_entry: ConfigEntry
     context: EntityContext
+    history: YunoHeatHistoryImporter
 
     def __init__(
         self,
@@ -58,6 +60,7 @@ class YunoHeatDataUpdateCoordinator(DataUpdateCoordinator[YunoHeatData]):
             update_interval=DEFAULT_SCAN_INTERVAL,
         )
         self.client = client
+        self.history = YunoHeatHistoryImporter(hass, self)
 
     async def _async_setup(self) -> None:
         """Resolve the account's entity context before the first refresh."""

@@ -1,0 +1,11 @@
+backfill_history:
+  fields:
+    days:
+      required: false
+      default: 730
+      selector:
+        number:
+          min: 1
+          max: 1825
+          mode: box
+          unit_of_measurement: days

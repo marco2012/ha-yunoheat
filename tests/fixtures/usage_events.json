@@ -1,0 +1,82 @@
+[
+ {
+  "event_id": 22203453,
+  "amount_with_discount": 1.97399,
+  "quantity": 5.0,
+  "identifier": "00000000",
+  "created_at": 1794792494499,
+  "service_type": "HEAT_METER_READ_SERVICE",
+  "fields": {
+   "identifier": "00000000",
+   "session_id": "00000000-1794787200000",
+   "meter_value": "834",
+   "reading_type": "A",
+   "time_of_read": "1794787200000",
+   "meter_value_unit": "kWh"
+  }
+ },
+ {
+  "event_id": 22224150,
+  "amount_with_discount": 1.73637,
+  "quantity": 4.0,
+  "identifier": "00000000",
+  "created_at": 1794878881308,
+  "service_type": "HEAT_METER_READ_SERVICE",
+  "fields": {
+   "identifier": "00000000",
+   "session_id": "00000000-1794873600000",
+   "meter_value": "837",
+   "reading_type": "A",
+   "time_of_read": "1794873600000",
+   "meter_value_unit": "kWh"
+  }
+ },
+ {
+  "event_id": 22241872,
+  "amount_with_discount": 2.44923,
+  "quantity": 7.0,
+  "identifier": "00000000",
+  "created_at": 1794998390866,
+  "service_type": "HEAT_METER_READ_SERVICE",
+  "fields": {
+   "identifier": "00000000",
+   "session_id": "00000000-1794960000000",
+   "meter_value": "843",
+   "reading_type": "A",
+   "time_of_read": "1794960000000",
+   "meter_value_unit": "kWh"
+  }
+ },
+ {
+  "event_id": 22253353,
+  "amount_with_discount": -31.56531,
+  "quantity": -70.0,
+  "identifier": "00000000",
+  "created_at": 1795001069856,
+  "service_type": "HEAT_METER_READ_SERVICE",
+  "fields": {
+   "identifier": "00000000",
+   "session_id": "00000000-1793318400000-r-1795001068730",
+   "meter_value": "792",
+   "reading_type": "A",
+   "time_of_read": "1793318400000",
+   "meter_value_unit": "kWh"
+  }
+ },
+ {
+  "event_id": 22253367,
+  "amount_with_discount": 31.56531,
+  "quantity": 70.0,
+  "identifier": "00000000",
+  "created_at": 1795001089359,
+  "service_type": "HEAT_METER_READ_SERVICE",
+  "fields": {
+   "identifier": "00000000",
+   "session_id": "00000000-1794960000000-m-1795001088452",
+   "meter_value": "843",
+   "reading_type": "A",
+   "time_of_read": "1794960000000",
+   "meter_value_unit": "kWh"
+  }
+ }
+]

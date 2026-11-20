@@ -87,6 +87,29 @@ The cumulative sensor accumulates each new usage event client-side and restores 
 across restarts, so it keeps a monotonic increasing value even though the API only returns a
 rolling window of recent events.
 
+### Heat history (backfill)
+
+The sensors above only know about readings from the day you installed the integration. To get
+your past readings into the Energy dashboard, the integration also writes your daily heat usage
+and cost as long-term statistics. These are separate *external statistics*, so they never touch
+the sensors' own history:
+
+- `yunoheat:meter_<meter id>_usage` (kWh, "Yuno Heat usage")
+- `yunoheat:meter_<meter id>_cost` (EUR, "Yuno Heat cost")
+
+The first import runs automatically after setup and looks back up to two years. After that it
+adds new readings after every poll. To re-import (for example after a correction), call the
+`yunoheat.backfill_history` action, optionally with `days` (1 to 1825, default 730). It returns a
+summary of what was imported.
+
+To use it in the Energy dashboard, add **Yuno Heat usage** as the gas/heating source and choose
+**Use an entity tracking the total costs** with **Yuno Heat cost**. Use these *instead of* the
+sensors above for that source, so consumption is not counted twice.
+
+A day's reading is stamped at midnight UTC and holds the previous day's consumption, so it is
+shown on the previous day. Bill-time roll-up and reversal events from the platform are ignored,
+because they restate a whole billing period and would double-count.
+
 ## Documentation
 
 📖 **Full documentation is published at <https://irishsmurf.github.io/ha-yunoheat/>** — a

@@ -53,5 +53,17 @@
         "name": "Cumulative usage"
       }
     }
+  },
+  "services": {
+    "backfill_history": {
+      "name": "Backfill history",
+      "description": "Re-imports your past daily heat readings into long-term statistics so the Energy dashboard shows history from before the integration was installed.",
+      "fields": {
+        "days": {
+          "name": "Days",
+          "description": "How many days of history to import."
+        }
+      }
+    }
   }
 }
